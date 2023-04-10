@@ -7,7 +7,10 @@ import mmaputil.MmapUtil;
 import mmaputil.write.rule.FieldSplit;
 import mmaputil.write.rule.SplitRule;
 import mmaputil.write.rule.TickSplit;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -35,14 +38,13 @@ public class TickService {
 
     MmapUtil<Tick> mmap;
 
-//    @PostConstruct
+
     private void generateTick() {
-        log.info("开始生成Tick");
         for (int g = 0; g < generationCount; g++) {
             long time = System.currentTimeMillis();
             for (int i = 0; i < numStock; i++) {
                 Tick tick = new Tick();
-                String code = "sh" + String.format("%06d", i);
+                String code = "SH" + String.format("%06d", i);
                 tick.setCode(code);
                 tick.setTime(time);
                 tick.setId(code + time);
@@ -58,13 +60,18 @@ public class TickService {
     }
 
     @PostConstruct
+    private void generateTickThread() {
+        log.info("开始生成Tick");
+        ThreadPoolService.singleThreadExecutor.execute(() -> generateTick());
+    }
+
+    @PostConstruct
     private void init() {
         mmap = new MmapUtil<>(directory, bufferSize, fileType);
         receiveToFileThread();
     }
 
     private void receiveToFile() throws Exception {
-//        SplitRule rule = new TickSplit();
         SplitRule rule = new FieldSplit("code");
         while (true) {
             Tick tick = tickQ.take();
