@@ -25,7 +25,7 @@ public class Tick {
     float low = 14.1f;
 
     // 实时价格
-    int price = 500;
+    int price = 400;
 
     // 成交量
     long volT = 41000;

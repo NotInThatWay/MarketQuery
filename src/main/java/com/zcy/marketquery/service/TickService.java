@@ -38,6 +38,8 @@ public class TickService {
 
     MmapUtil<Tick> mmap;
 
+    SplitRule rule;
+
 
     private void generateTick() {
         for (int g = 0; g < generationCount; g++) {
@@ -55,24 +57,24 @@ public class TickService {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-//            System.out.println("循环：" + g + ", Q大小：" + tickQ.size());
         }
     }
 
     @PostConstruct
     private void generateTickThread() {
         log.info("开始生成Tick");
-        ThreadPoolService.singleThreadExecutor.execute(() -> generateTick());
+        ThreadPoolService.singleThreadExecutor.execute(this::generateTick);
     }
 
     @PostConstruct
     private void init() {
+//        rule = new FieldSplit("code");
+        rule = new CountSplit(2000);
         mmap = new MmapUtil<>(directory, bufferSize, fileType);
         receiveToFileThread();
     }
 
     private void receiveToFile() throws Exception {
-        SplitRule rule = new FieldSplit("code");
         while (true) {
             Tick tick = tickQ.take();
             mmap.writeToFile(tick, rule);

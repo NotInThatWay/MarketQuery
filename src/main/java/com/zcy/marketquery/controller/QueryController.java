@@ -24,14 +24,15 @@ public class QueryController {
     @Autowired
     TickService tickService;
 
-    List<Long> list;
+    List<Long> durationList;
 
-    int count;
+    List<Long> timestampList;
+
 
     @PostConstruct
     public void init() {
-        list = new ArrayList<>();
-        count = 0;
+        durationList = new ArrayList<>();
+        timestampList = new ArrayList<>();
     }
 
     @PostMapping("/query")
@@ -39,31 +40,28 @@ public class QueryController {
         long start = System.nanoTime();
         String result = queryService.generateResponse(requestItem);
         long end = System.nanoTime();
-        list.add(end - start);
-        count++;
+        durationList.add(end - start);
+        timestampList.add(start);
+        timestampList.add(end);
         return result;
     }
 
     @GetMapping("/time")
     public String time() {
-        String size = Integer.toString(list.size());
+        String size = Integer.toString(durationList.size());
         if (size.equals("0")) return "空";
         BigInteger b = new BigInteger("0");
-        for (long i : list) {
+        for (long i : durationList) {
             b = b.add(new BigInteger(Long.toString(i)));
         }
         String result = b.divide(new BigInteger(size)).toString();
-        return "平均时间：" + result + " 个数：" + size + " 总时间：" + b;
+        String duration = Long.toString(timestampList.get(timestampList.size()-1) - timestampList.get(0));
+        return "平均时间：" + result + " 个数：" + size + " 总和：" + b + " 总耗时：" + duration;
     }
 
     @GetMapping("/clear")
     public void clear() {
-        list.clear();
-    }
-
-    @GetMapping("/count")
-    public int count() {
-        return count;
+        durationList.clear();
     }
 
 }

@@ -42,8 +42,9 @@ public class QueryService {
 
     MmapUtil<Tick> mmap;
     SimpleDateFormat dateFormat;
+
     @PostConstruct
-    public void init(){
+    public void init() {
         mmap = new MmapUtil<>(directory, bufferSize, fileType);
         dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     }
