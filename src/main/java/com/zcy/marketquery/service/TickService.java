@@ -1,19 +1,14 @@
 package com.zcy.marketquery.service;
 
 import com.zcy.marketquery.dao.Tick;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import mmaputil.MmapUtil;
 import mmaputil.write.rule.FieldSplit;
 import mmaputil.write.rule.SplitRule;
-import mmaputil.write.rule.TickSplit;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import javax.annotation.PostConstruct;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -40,7 +35,9 @@ public class TickService {
 
     SplitRule rule;
 
-
+    /**
+     * 定期生成 Tick 数据
+     */
     private void generateTick() {
         for (int g = 0; g < generationCount; g++) {
             long time = System.currentTimeMillis();
@@ -60,20 +57,29 @@ public class TickService {
         }
     }
 
+    /**
+     * 生成 Tick 线程
+     */
     @PostConstruct
     private void generateTickThread() {
         log.info("开始生成Tick");
         ThreadPoolService.singleThreadExecutor.execute(this::generateTick);
     }
 
+    /**
+     * 初始化
+     */
     @PostConstruct
     private void init() {
-//        rule = new FieldSplit("code");
-        rule = new CountSplit(2000);
+        rule = new FieldSplit("code");
+//        rule = new CountSplit(2000);
         mmap = new MmapUtil<>(directory, bufferSize, fileType);
         receiveToFileThread();
     }
 
+    /**
+     * 将 Tick 写入磁盘
+     */
     private void receiveToFile() throws Exception {
         while (true) {
             Tick tick = tickQ.take();
@@ -81,6 +87,9 @@ public class TickService {
         }
     }
 
+    /**
+     * 将 Tick 数据写入磁盘线程
+     */
     private void receiveToFileThread() {
         for (int i = 0; i < numThread; i++) {
             ThreadPoolService.receiveToFileExecutor.execute(() -> {
